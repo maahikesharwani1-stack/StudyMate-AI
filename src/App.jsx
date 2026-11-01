@@ -7,6 +7,9 @@ import html2pdf from "html2pdf.js";
 function App() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [question, setQuestion] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState([]);
   const [time, setTime] = useState("25:00");
@@ -63,6 +66,52 @@ const handleGenerateNotes = async () => {
     setNotesError(error.message);
   } finally {
     setIsGenerating(false);
+  }
+};
+
+const handleAskAI = async (event) => {
+  event.preventDefault();
+
+  const trimmedQuestion = question.trim();
+  if (!trimmedQuestion || isChatLoading) return;
+
+  const updatedMessages = [
+    ...chatMessages,
+    { role: "user", content: trimmedQuestion }
+  ];
+
+  setChatMessages(updatedMessages);
+  setQuestion("");
+  setChatError("");
+  setIsChatLoading(true);
+
+  try {
+    const apiUrl = import.meta.env.DEV
+      ? "http://localhost:3001/api/ask-ai"
+      : "/api/ask-ai";
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ messages: updatedMessages })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to get an AI response.");
+    }
+
+    setChatMessages((current) => [
+      ...current,
+      { role: "assistant", content: data.text }
+    ]);
+  } catch (error) {
+    setChatError(error.message || "Something went wrong. Please try again.");
+  } finally {
+    setIsChatLoading(false);
   }
 };
 
@@ -197,44 +246,72 @@ const handleDownloadPDF = () => {
           )}
 
           {activeTab === "AI Assistant" && (
-            <section className="panel">
+            <section className="panel assistant-panel">
               <span className="tag">✦ YOUR PERSONAL AI TUTOR</span>
               <h1>AI Assistant</h1>
-              <p>Ask questions and get help with your studies.</p>
+              <p>Ask a question about your BCA subjects and get a simple explanation.</p>
+
               <div className="chat-box">
-                <div className="bot-message">
-                  ✨ Hello! I'm your StudyMate assistant. What would you like
-                  to learn today?
-                </div>
-                <div className="suggestions">
-                  {["Explain DBMS", "Teach me Java", "What is an algorithm?"].map(
-                    (q) => (
-                      <button key={q} onClick={() => setQuestion(q)}>
-                        {q}
-                      </button>
-                    )
+                <div className="chat-thread" aria-live="polite">
+                  {chatMessages.length === 0 && (
+                    <>
+                      <div className="bot-message">
+                        ✨ Hello! I'm your StudyMate AI tutor. Ask me anything you're learning today.
+                      </div>
+                      <div className="suggestions">
+                        {["Explain DBMS keys", "Teach me Java OOP", "What is a data structure?"].map(
+                          (q) => (
+                            <button key={q} type="button" onClick={() => setQuestion(q)}>
+                              {q}
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {chatMessages.map((message, index) => (
+                    <div
+                      key={`${message.role}-${index}`}
+                      className={`chat-message ${message.role === "user" ? "user-message" : "assistant-message"}`}
+                    >
+                      {message.role === "assistant" ? (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p>{message.content}</p>
+                      )}
+                    </div>
+                  ))}
+
+                  {isChatLoading && (
+                    <div className="chat-message assistant-message typing-message">
+                      StudyMate is thinking…
+                    </div>
                   )}
                 </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (question.trim()) {
-                      alert("Your question is ready for AI integration: " + question);
-                      setQuestion("");
-                    }
-                  }}
-                  className="chat-input"
-                >
+
+                {chatError && <p className="chat-error">{chatError}</p>}
+
+                <form onSubmit={handleAskAI} className="chat-input">
                   <input
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="Ask anything about your studies..."
+                    aria-label="Your question"
+                    disabled={isChatLoading}
                   />
-                  <button type="submit">➤</button>
+                  <button
+                    type="submit"
+                    disabled={isChatLoading || !question.trim()}
+                    aria-label="Send question"
+                  >
+                    {isChatLoading ? "…" : "➤"}
+                  </button>
                 </form>
                 <small className="muted">
-                  AI API integration will be connected in the next development
-                  stage.
+                  Powered by Gemini AI. Ask follow-up questions to continue the conversation.
                 </small>
               </div>
             </section>
