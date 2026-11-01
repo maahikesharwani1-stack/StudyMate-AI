@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import "./App.css";
 import ReactMarkdown from "react-markdown";
@@ -38,19 +37,20 @@ const handleGenerateNotes = async () => {
   setGeneratedNotes("");
 
   try {
-    const response = await fetch(
-      "http://localhost:3001/api/generate-notes",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          topic: topic,
-          level: "beginner"
-        })
-      }
-    );
+    const apiUrl = import.meta.env.DEV
+      ? "http://localhost:3001/api/generate-notes"
+      : "/api/generate-notes";
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        topic: topic,
+        level: "beginner"
+      })
+    });
 
     const data = await response.json();
 
