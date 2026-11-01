@@ -46,7 +46,7 @@ app.post("/api/ask-ai", async (req, res) => {
           ? `Student: ${message.content}`
           : `StudyMate AI: ${message.content}`
       )
-      .join("\\n\\n");
+      .join("\n\n");
 
     const prompt = `
 You are StudyMate AI, a friendly and accurate personal tutor for BCA students.
