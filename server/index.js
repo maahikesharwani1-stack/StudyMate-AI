@@ -19,6 +19,61 @@ if (!apiKey) {
 }
 const ai = new GoogleGenAI({ apiKey });
 
+app.post("/api/ask-ai", async (req, res) => {
+  try {
+    const incomingMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
+    const messages = incomingMessages
+      .filter(
+        (message) =>
+          message &&
+          ["user", "assistant"].includes(message.role) &&
+          typeof message.content === "string" &&
+          message.content.trim()
+      )
+      .slice(-12)
+      .map((message) => ({
+        role: message.role,
+        content: message.content.trim().slice(0, 5000)
+      }));
+
+    if (messages.length === 0 || messages[messages.length - 1].role !== "user") {
+      return res.status(400).json({ error: "Please enter a question first." });
+    }
+
+    const conversation = messages
+      .map((message) =>
+        message.role === "user"
+          ? `Student: ${message.content}`
+          : `StudyMate AI: ${message.content}`
+      )
+      .join("\\n\\n");
+
+    const prompt = `
+You are StudyMate AI, a friendly and accurate personal tutor for BCA students.
+Explain concepts in simple beginner-friendly language, use practical examples,
+format answers clearly with Markdown, explain code step by step, and never invent facts.
+If you are unsure, say so.
+
+Conversation so far:
+${conversation}
+
+Answer the student's latest question and continue naturally.
+`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: prompt
+    });
+
+    res.json({ success: true, text: response.text ?? "" });
+  } catch (error) {
+    console.error("Gemini chat error:", error.message);
+    res.status(500).json({
+      error: "Unable to get an AI response right now. Please try again."
+    });
+  }
+});
+
 app.post("/api/generate-notes", async (req, res) => {
   try {
     const { topic, level = "beginner" } = req.body;
