@@ -1,16 +1,23 @@
-# React + Vite
+# StudyMate AI 🎓
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered study companion for college students.
 
-Currently, two official plugins are available:
+## Features
+- AI Study Assistant
+- Topic Explanation
+- Quiz Generation
+- Notes Generation
+- Pomodoro Timer
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Technology Stack
+- React
+- TypeScript
+- Google Gemini AI
+- Git & GitHub
 
-## React Compiler
+## Project Goal
+To make learning easier through AI-powered
+personalized study assistance.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Status
+🚧 Currently under development.
